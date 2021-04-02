@@ -35,8 +35,9 @@ public class CommandLineModule extends AbstractModule {
         return new Options()
                 .addOption("p", "port", true, "The port the irc server will run on, default 6667")
                 .addOption("r", "properties", true, "The properties file that will be used to configure the server. Command line overrides file properties. Default ./application.properties")
-                .addOption("o", "ssl-port", true, "ssl port, if ssl is enabled, default 7667")
-                .addOption("s", "ssl-enabled", true, "enable ssl, default false");
+                .addOption("o", "ssl-port", true, "ssl port, if ssl is enabled, default 6697")
+                .addOption("s", "ssl-enabled", true, "enable ssl, default false")
+                .addOption("a", "server-password", true, "set server password, default none");
     }
 
     @Provides

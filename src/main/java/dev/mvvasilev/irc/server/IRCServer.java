@@ -1,14 +1,12 @@
 package dev.mvvasilev.irc.server;
 
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import dev.mvvasilev.irc.server.handler.IRCServerHandler;
 import dev.mvvasilev.irc.server.handler.IRCServerInitializer;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -23,6 +21,9 @@ import org.apache.commons.cli.CommandLine;
 public class IRCServer {
 
     @Inject
+    Injector injector;
+
+    @Inject
     CommandLine commandLine;
 
     private Integer port;
@@ -31,10 +32,14 @@ public class IRCServer {
 
     private Boolean sslEnabled;
 
+    private EventLoopGroup masterGroup;
+
+    private EventLoopGroup slaveGroup;
+
     @Inject
     public IRCServer(CommandLine commandLine) {
         port = Integer.valueOf(commandLine.getOptionValue("port", "6667"));
-        sslPort = Integer.valueOf(commandLine.getOptionValue("ssl-port", "7667"));
+        sslPort = Integer.valueOf(commandLine.getOptionValue("ssl-port", "6697"));
         sslEnabled = Boolean.valueOf(commandLine.getOptionValue("ssl-enabled", "false"));
     }
 
@@ -48,24 +53,24 @@ public class IRCServer {
             sslCtx = null;
         }
 
-        EventLoopGroup bossGroup = new NioEventLoopGroup();
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
+        masterGroup = new NioEventLoopGroup();
+        slaveGroup = new NioEventLoopGroup();
 
         try {
 
             ServerBootstrap bootstrap = new ServerBootstrap();
 
-            bootstrap.group(bossGroup, workerGroup)
+            bootstrap.group(masterGroup, slaveGroup)
                     .channel(NioServerSocketChannel.class)
                     .handler(new LoggingHandler(LogLevel.INFO))
-                    .childHandler(new IRCServerInitializer(sslCtx))
+                    .childHandler(new IRCServerInitializer(sslCtx, injector))
                     .option(ChannelOption.SO_BACKLOG, 128)
                     .childOption(ChannelOption.SO_KEEPALIVE, true);
 
             bootstrap.bind(port).sync().channel().closeFuture().sync();
         } finally {
-            workerGroup.shutdownGracefully();
-            bossGroup.shutdownGracefully();
+            masterGroup.shutdownGracefully();
+            slaveGroup.shutdownGracefully();
         }
     }
 }

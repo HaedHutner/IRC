@@ -8,19 +8,25 @@ import dev.mvvasilev.irc.internal.IRCModule;
 import dev.mvvasilev.irc.internal.PropertiesModule;
 import dev.mvvasilev.irc.server.IRCServer;
 
+import java.awt.event.WindowStateListener;
+
 public class IRCStarter {
 
-    private Injector injector;
+    private static IRCStarter instance;
+
+    private static Injector injector;
 
     @Inject
     private IRCServer ircServer;
 
-    public IRCStarter(String[] args) {
+    public IRCStarter init(String[] args) {
         injector = Guice.createInjector(
                 new CommandLineModule(args),
                 new PropertiesModule(),
                 new IRCModule()
         );
+
+        return this;
     }
 
     public void startServer() {
@@ -33,5 +39,12 @@ public class IRCStarter {
         }
     }
 
+    public static IRCStarter getInstance() {
+        if (instance == null) {
+            instance = new IRCStarter();
+        }
+
+        return instance;
+    }
 
 }

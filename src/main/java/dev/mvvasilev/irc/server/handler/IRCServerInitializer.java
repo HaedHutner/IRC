@@ -1,5 +1,6 @@
 package dev.mvvasilev.irc.server.handler;
 
+import com.google.inject.Injector;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
@@ -13,12 +14,13 @@ public class IRCServerInitializer extends ChannelInitializer<SocketChannel> {
     private static final StringDecoder DECODER = new StringDecoder();
     private static final StringEncoder ENCODER = new StringEncoder();
 
-    private static final IRCServerHandler SERVER_HANDLER = new IRCServerHandler();
-
     private final SslContext sslCtx;
 
-    public IRCServerInitializer(SslContext sslCtx) {
+    private final Injector injector;
+
+    public IRCServerInitializer(SslContext sslCtx, Injector injector) {
         this.sslCtx = sslCtx;
+        this.injector = injector;
     }
 
     @Override
@@ -34,6 +36,6 @@ public class IRCServerInitializer extends ChannelInitializer<SocketChannel> {
         pipeline.addLast(DECODER);
         pipeline.addLast(ENCODER);
 
-        pipeline.addLast(SERVER_HANDLER);
+        pipeline.addLast(injector.getInstance(IRCServerHandler.class));
     }
 }
